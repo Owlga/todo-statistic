@@ -38,18 +38,71 @@ function getTodosFromFile(fileInfo) {
 }
 
 function getUser(username) {
-    const re = /\/\/ TODO (\w+);( ){0,1}?([-\d]+);( ){0,1}(.+)/;
-    todos = getAllTodos(files);
+    let total = getEntries()[0];
+    let result = []
+    for (const entry of total) {
+        if (entry[1].toLowerCase() === username.toLowerCase()) {
+            result.push(entry[0])
+        }
+    }
+    return result;
+}
+
+function getEntries() {
+    let total = []
+    let nameless = []
+    const re = /\/\/ TODO ([ \w]+);( ){0,1}?([-\d]+);( ){0,1}(.+)/;
+    let todos = getAllTodos(files);
     for (const string of todos) {
         let result = string.match(re);
         if (result === null || result === undefined){
-            continue;
+            nameless.push(string);
         }
-        if (result[1] === username){
-            console.log(string)
+        else {
+            total.push(result);
+        }
+    }
+    return [total, nameless];
+}
+
+
+function sortBy(command) {
+    switch (command) {
+        case "importance": {
+            break;
+        }
+        case "user": {
+            return sortByUser()
+        }
+        case "date": {
+            break;
         }
     }
 }
+
+function sortByUser() {
+    let result = []
+    let [allEntries, allNameless] = getEntries();
+    let allNames = new Map();
+    for (const entry of allEntries) {
+        let name = entry[1].toLowerCase();
+        if (!allNames.has(name)) {
+            allNames.set(name, []);
+        }
+        let value = allNames.get(name);
+        value.push(entry[0]);
+        allNames.set(name, value);
+    }
+
+    for (let name of allNames.keys()) {
+        for (let comment of allNames.get(name)) {
+            result.push(comment);
+        }
+    }
+    result = result.concat(allNameless);
+    return result;
+}
+
 
 function processCommand(command) {
     switch (command.split(' ')[0]) {
@@ -72,7 +125,12 @@ function processCommand(command) {
         }
         case "user":{
             let userName = command.split(' ')[1];
-            getUser(userName);
+            console.log(getUser(userName));
+            break;
+        }
+        case "sort":
+        {
+            console.log(sortBy(command.split(' ')[1]))
             break;
         }
         default:
